@@ -1,88 +1,101 @@
-import React, {PureComponent} from 'react';
-import {Radio, ColorPicker} from 'zent';
+/* eslint-disable no-script-url */
 
+import React, {PureComponent} from 'react';
+import {Button, Input, ColorPicker} from 'zent';
 import ControlGroup from './ControlGroup';
 
-const RadioGroup = Radio.Group;
-const DEFAULT_COLOR = '#e5e5e5';
-const prefix = 'mp';
+const DEFAULT_BACKGROUND = '#f9f9f9';
+export default class ConfigEditor extends PureComponent {
+  render() {
+    const { instance: value, settings, showError, validation } = this.props;
 
-export default class LineEditor extends PureComponent {
-    render() {
-        const {instance: value, showError, validation} = this.props;
+    return (
+      <div className={`bundle-config-design-component-config-editor`}>
+        <ControlGroup
+          showError={showError }
+          error={validation.title}
+          required
+          label="页面名称:"
+        >
+          <Input
+            value={value.title}
+            onChange={this.onInputChange}
+            onBlur={this.onInputBlur}
+            name="title"
+          />
+        </ControlGroup>
 
-        return (
-            <div className={`${prefix}-design-component-line-editor`}>
-                <ControlGroup
-                    label="颜色:"
-                    showError={showError}
-                    error={validation.content}
-                >
-                    <ColorPicker
-                        className={`${prefix}-design-component-line-editor_color-select`}
-                        color={value.color}
-                        onChange={this.onColorChange}
-                    />
-                    <span
-                        className={`${prefix}-design-component-line-editor_color-reset`}
-                        onClick={this.onColorReset}
-                    >
-                        重置
-                    </span>
-                </ControlGroup>
-                <ControlGroup
-                    label="边距:"
-                    showError={showError}
-                    error={validation.content}
-                >
-                    <RadioGroup value={value.hasPadding} onChange={this.onInputChange}>
-                        <Radio name="hasPadding" value={false}>
-                            无边距
-                        </Radio>
-                        <Radio name="hasPadding" value>
-                            左右留边
-                        </Radio>
-                    </RadioGroup>
-                </ControlGroup>
-                <ControlGroup
-                    label="样式:"
-                    showError={showError}
-                    error={validation.content}
-                >
-                    <RadioGroup value={value.lineType} onChange={this.onInputChange}>
-                        <Radio name="lineType" value="solid">
-                            实线
-                        </Radio>
-                        <Radio name="lineType" value="dashed">
-                            虚线
-                        </Radio>
-                        <Radio name="lineType" value="dotted">
-                            点线
-                        </Radio>
-                    </RadioGroup>
-                </ControlGroup>
-            </div>
-        );
+        <ControlGroup
+          showError={
+            showError 
+          }
+          error={validation.description}
+          label="页面描述:"
+        >
+          <Input
+            value={value.description}
+            onChange={this.onInputChange}
+            onBlur={this.onInputBlur}
+            name="description"
+            placeholder="用户通过微信分享给朋友时，会自动显示页面描述"
+          />
+        </ControlGroup>
+
+        <ControlGroup
+          label="背景颜色:"
+          labelAlign="top"
+          className={`bundle-config-design-component-config-editor__background`}
+          focusOnLabelClick={false}
+        >
+          <div
+            className={`bundle-config-design-component-config-editor__background-control`}
+          >
+            <ColorPicker
+              color={getBackground(value, settings)}
+              onChange={this.onBackgroundChange}
+            />
+            <Button onClick={this.resetBackground}>重置</Button>
+          </div>
+          <div
+            className={`bundle-config-design-component-config-editor__background-hint`}
+          >
+            背景颜色只在手机端显示
+          </div>
+        </ControlGroup>
+      </div>
+    );
+  }
+
+  onBackgroundChange = color => {
+    let {design, instance} = this.props;
+    // 修改 Config 组件的值
+    design.modifyInstance(instance, {color: color});
+    // 修改 settings
+    design.setSettings({
+        previewBackground: color
+    });
+  };
+
+  onInputChange = (evt) => {
+    const {target} = evt;
+    let {name, type, value} = target;
+
+    if (type === 'checkbox') {
+        value = target.checked;
     }
+    const {design, instance} = this.props;
+    design.modifyInstance(instance, {[name]: value});
+  }
 
+  resetBackground = () => {
+    this.onBackgroundChange(DEFAULT_BACKGROUND);
+  };
 
-    onColorChange = (value) => {
-        const {design, instance} = this.props;
-        design.modifyInstance(instance, {color: value});
-    }
+  filterTag = (item, keyword) => item.text.indexOf(keyword) > -1;
+}
 
-    onColorReset = () => {
-        this.onColorChange(DEFAULT_COLOR);
-    };
-
-    onInputChange = evt => {
-        const {target} = evt;
-        let {name, type, value} = target;
-
-        if (type === 'checkbox') {
-            value = target.checked;
-        }
-        const {design, instance} = this.props;
-        design.modifyInstance(instance, {[name]: value});
-    };
+function getBackground(value, settings) {
+  return (
+    (value && value.color) || settings.previewBackground || DEFAULT_BACKGROUND
+  );
 }
